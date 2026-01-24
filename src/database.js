@@ -1,6 +1,22 @@
+import fs from 'node:fs/promises';
+
+const databasePath = new URL('../db.json', import.meta.url);
 export class Database {
   #database = {}; // o # é usado para proteger a propriedade, ela é transformada em uma propriedade privada, agora não pode ser acessada em outros arquivos
 
+  constructor() {
+    fs.readFile(databasePath, 'utf8')
+      .then((data) => {
+        this.#database = JSON.parse(data);
+      })
+      .catch(() => {
+        this.#persist();
+      });
+  }
+
+  async #persist() {
+    await fs.writeFile(databasePath, JSON.stringify(this.#database));
+  }
   select(table) {
     const data = this.#database[table] ?? [];
     return data;
@@ -11,6 +27,7 @@ export class Database {
     } else {
       this.#database[table] = [data];
     }
+    this.#persist();
     return data;
   }
 }
